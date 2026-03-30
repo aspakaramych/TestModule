@@ -70,9 +70,9 @@ export default function DetailsModal({
           {hasPhotos && (
             <Grid size={{ xs: 12, md: 5 }}>
               <Box sx={{ 
-                height: { xs: 240, md: 320 }, // фиксированная высота
+                height: { xs: 240, md: 320 }, 
                 width: '100%',
-                maxWidth: 400, // ограничение ширины для крупных экранов
+                maxWidth: 400, 
                 mx: 'auto',
                 position: 'relative',
                 display: 'flex',
@@ -95,7 +95,6 @@ export default function DetailsModal({
                     borderRadius: 2
                   }}
                 />
-                {/* Переключатель фото */}
                 {photos.length > 1 && (
                   <Box sx={{ position: 'absolute', bottom: 12, left: 0, right: 0, display: 'flex', justifyContent: 'center', gap: 1 }}>
                     {photos.map((_, idx) => (
