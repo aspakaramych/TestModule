@@ -12,10 +12,9 @@ using LinqToDB;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Увеличиваем лимит размера тела запроса до 50 МБ
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.Limits.MaxRequestBodySize = 52428800; // 50 MB
+    serverOptions.Limits.MaxRequestBodySize = 52428800; 
 });
 
 builder.Services.AddEndpointsApiExplorer();
