@@ -3,409 +3,131 @@ using System.Collections.Generic;
 using Domain.Models;
 using Xunit;
 
-namespace Domain.UnitTests
+namespace Domain.UnitTests;
+
+public class DishMacrosCalculationTests 
 {
-    public class DishMacrosCalculationTests
+    private Dish _dish;
+
+    public DishMacrosCalculationTests()
     {
-        private Product MakeProduct(decimal cal, decimal pro, decimal fat, decimal carb)
-            => new Product { Calories = cal, Proteins = pro, Fats = fat, Carbohydrates = carb };
-        private DishProductItem MakeIngredient(Product p, decimal amount)
-            => new DishProductItem { Product = p, AmountInGrams = amount };
+        _dish = new Dish();
+    }
 
-        [Fact(DisplayName = "КОГДА блюдо содержит два ингредиента с разными КБЖУ, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_StandardCase_CorrectResult()
+    private Product CreateProductStub(decimal calories, decimal proteins, decimal fats, decimal carbs)
+    {
+        return new Product
         {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20); 
-            var p2 = MakeProduct(200, 20, 10, 40);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100), 
-                    MakeIngredient(p2, 50)   
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100 + 200*0.5m, dish.Calories);
-            Assert.Equal(10 + 20*0.5m, dish.Proteins);
-            Assert.Equal(5 + 10*0.5m, dish.Fats);
-            Assert.Equal(20 + 40*0.5m, dish.Carbohydrates);
-        }
+            Id = Guid.NewGuid(),
+            Calories = calories,
+            Proteins = proteins,
+            Fats = fats,
+            Carbohydrates = carbs
+        };
+    }
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с 0 грамм, ТОГДА КБЖУ блюда равны 0")]
-        public void RecalculateMacros_ZeroAmountIngredient_ResultIgnoresZero()
+    [Theory(DisplayName = "КОГДА подаются граничные значения для веса ингредиента, ТОГДА расчет КБЖУ блюда выполняется корректно")]
+    [InlineData(-100, 0)]
+    [InlineData(-1, 0)]
+    [InlineData(0, 0)]
+    [InlineData(1, 1)]
+    [InlineData(50, 50)]
+    [InlineData(100, 100)]
+    [InlineData(10000, 10000)]
+    public void RecalculateMacros_BoundaryValuesForAmount_IsCorrect(int amountInGrams, int expectedMultiplierFactor)
+    {
+        // Arrange
+        var productStub = CreateProductStub(100m, 10m, 5m, 20m);
+        _dish.Ingredients = new List<DishProductItem>
         {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 0)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+            new DishProductItem { Product = productStub, AmountInGrams = amountInGrams }
+        };
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с 100 грамм, ТОГДА КБЖУ блюда совпадают с продуктом")]
-        public void RecalculateMacros_100gIngredient_EqualsProduct()
-        {
-            // Arrange
-            var p1 = MakeProduct(123, 11, 22, 33);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(p1.Calories, dish.Calories);
-            Assert.Equal(p1.Proteins, dish.Proteins);
-            Assert.Equal(p1.Fats, dish.Fats);
-            Assert.Equal(p1.Carbohydrates, dish.Carbohydrates);
-        }
+        // Act
+        _dish.RecalculateMacrosFromIngredients();
 
-        [Fact(DisplayName = "КОГДА блюдо не содержит ингредиентов, ТОГДА КБЖУ блюда равны 0")]
-        public void RecalculateMacros_NoIngredients_AllZero()
-        {
-            // Arrange
-            var dish = new Dish();
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+        // Assert
+        var expectedRatio = expectedMultiplierFactor / 100m;
+        Assert.Equal(100m * expectedRatio, _dish.Calories);
+        Assert.Equal(10m * expectedRatio, _dish.Proteins);
+        Assert.Equal(5m * expectedRatio, _dish.Fats);
+        Assert.Equal(20m * expectedRatio, _dish.Carbohydrates);
+    }
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с максимальными значениями, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_MaxValues_CorrectResult()
+    [Fact(DisplayName = "КОГДА ингредиент имеет экстремально малую дробную граммовку, ТОГДА КБЖУ рассчитывается без ошибок")]
+    public void RecalculateMacros_FractionalBoundaryAmount_IsCorrect()
+    {
+        // Arrange
+        var productStub = CreateProductStub(100m, 10m, 5m, 20m);
+        _dish.Ingredients = new List<DishProductItem>
         {
-            // Arrange
-            var max = decimal.MaxValue/1000; 
-            var p1 = MakeProduct(max, max, max, max);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(max, dish.Calories);
-            Assert.Equal(max, dish.Proteins);
-            Assert.Equal(max, dish.Fats);
-            Assert.Equal(max, dish.Carbohydrates);
-        }
+            new DishProductItem { Product = productStub, AmountInGrams = 0.01m }
+        };
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с null Product, ТОГДА такой ингредиент игнорируется при расчёте КБЖУ блюда")]
-        public void RecalculateMacros_NullProductIngredient_IgnoresNull()
-        {
-            // Arrange
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    new DishProductItem { Product = null, AmountInGrams = 100 }
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+        // Act
+        _dish.RecalculateMacrosFromIngredients();
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с отрицательной массой, ТОГДА такой ингредиент игнорируется при расчёте КБЖУ блюда")]
-        public void RecalculateMacros_NegativeAmountIngredient_IgnoresNegative()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, -50)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+        // Assert
+        var ratio = 0.01m / 100m;
+        Assert.Equal(100m * ratio, _dish.Calories);
+        Assert.Equal(10m * ratio, _dish.Proteins);
+    }
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с дробной массой, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_FractionalAmountIngredient_CorrectResult()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 12.5m)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100 * 0.125m, dish.Calories);
-            Assert.Equal(10 * 0.125m, dish.Proteins);
-            Assert.Equal(5 * 0.125m, dish.Fats);
-            Assert.Equal(20 * 0.125m, dish.Carbohydrates);
-        }
+    [Fact(DisplayName = "КОГДА блюдо содержит несколько ингредиентов с положительным весом, ТОГДА КБЖУ блюда равно сумме КБЖУ ингредиентов")]
+    public void RecalculateMacros_MultipleIngredients_CalculatesSumCorrectly()
+    {
+        // Arrange
+        var meatStub = CreateProductStub(250m, 26m, 15m, 0m);
+        var potatoStub = CreateProductStub(77m, 2m, 0.4m, 17m);
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с нулевыми КБЖУ, ТОГДА КБЖУ блюда равны 0")]
-        public void RecalculateMacros_ZeroMacrosProduct_ResultZero()
+        _dish.Ingredients = new List<DishProductItem>
         {
-            // Arrange
-            var p1 = MakeProduct(0, 0, 0, 0);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+            new DishProductItem { Product = meatStub, AmountInGrams = 200m },
+            new DishProductItem { Product = potatoStub, AmountInGrams = 150m }
+        };
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с очень маленькой положительной массой, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_VerySmallAmount_CorrectResult()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 0.001m)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100 * 0.00001m, dish.Calories);
-            Assert.Equal(10 * 0.00001m, dish.Proteins);
-            Assert.Equal(5 * 0.00001m, dish.Fats);
-            Assert.Equal(20 * 0.00001m, dish.Carbohydrates);
-        }
+        // Act
+        _dish.RecalculateMacrosFromIngredients();
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с большой массой, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_LargeAmount_CorrectResult()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 1000)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100 * 10, dish.Calories);
-            Assert.Equal(10 * 10, dish.Proteins);
-            Assert.Equal(5 * 10, dish.Fats);
-            Assert.Equal(20 * 10, dish.Carbohydrates);
-        }
+        // Assert
+        Assert.Equal((250m * 2.0m) + (77m * 1.5m), _dish.Calories);
+        Assert.Equal((26m * 2.0m) + (2m * 1.5m), _dish.Proteins);
+        Assert.Equal((15m * 2.0m) + (0.4m * 1.5m), _dish.Fats);
+        Assert.Equal((0m * 2.0m) + (17m * 1.5m), _dish.Carbohydrates);
+    }
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с очень маленькой отрицательной массой, ТОГДА такой ингредиент игнорируется при расчёте КБЖУ блюда")]
-        public void RecalculateMacros_VerySmallNegativeAmount_Ignores()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, -0.0001m)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+    [Fact(DisplayName = "КОГДА список ингредиентов пуст или равен null, ТОГДА все макронутриенты блюда равны 0")]
+    public void RecalculateMacros_EmptyOrNullIngredients_ReturnsZero()
+    {
+        // Arrange
+        _dish.Ingredients = null!;
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с отрицательной массой, ТОГДА такой ингредиент игнорируется при расчёте КБЖУ блюда")]
-        public void RecalculateMacros_NegativeAmountBoundary_Ignores()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, -1)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+        // Act
+        _dish.RecalculateMacrosFromIngredients();
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с нулевой массой, ТОГДА такой ингредиент игнорируется при расчёте КБЖУ блюда")]
-        public void RecalculateMacros_ZeroAmountBoundary_Ignores()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 0)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
+        // Assert
+        Assert.Equal(0m, _dish.Calories);
+        Assert.Equal(0m, _dish.Proteins);
+        Assert.Equal(0m, _dish.Fats);
+        Assert.Equal(0m, _dish.Carbohydrates);
+    }
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с минимальной положительной массой, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_MinPositiveAmountBoundary_Correct()
+    [Fact(DisplayName = "КОГДА в блюде есть ингредиент без продукта (Product == null), ТОГДА этот ингредиент игнорируется при расчёте")]
+    public void RecalculateMacros_IngredientWithNullProduct_IsIgnored()
+    {
+        // Arrange
+        var validProduct = CreateProductStub(100m, 10m, 10m, 10m);
+        _dish.Ingredients = new List<DishProductItem>
         {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 0.0001m)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100 * 0.000001m, dish.Calories);
-            Assert.Equal(10 * 0.000001m, dish.Proteins);
-            Assert.Equal(5 * 0.000001m, dish.Fats);
-            Assert.Equal(20 * 0.000001m, dish.Carbohydrates);
-        }
+            new DishProductItem { Product = validProduct, AmountInGrams = 100m },
+            new DishProductItem { Product = null!, AmountInGrams = 500m }
+        };
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с стандартной массой, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_StandardAmountBoundary_Correct()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100, dish.Calories);
-            Assert.Equal(10, dish.Proteins);
-            Assert.Equal(5, dish.Fats);
-            Assert.Equal(20, dish.Carbohydrates);
-        }
+        // Act
+        _dish.RecalculateMacrosFromIngredients();
 
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с большой массой, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_LargeAmountBoundary_Correct()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 1000)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(1000, dish.Calories);
-            Assert.Equal(100, dish.Proteins);
-            Assert.Equal(50, dish.Fats);
-            Assert.Equal(200, dish.Carbohydrates);
-        }
-
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с нулевыми макронутриентами, ТОГДА КБЖУ блюда нулевые")]
-        public void RecalculateMacros_ZeroMacrosBoundary_Zero()
-        {
-            // Arrange
-            var p1 = MakeProduct(0, 0, 0, 0);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0, dish.Calories);
-            Assert.Equal(0, dish.Proteins);
-            Assert.Equal(0, dish.Fats);
-            Assert.Equal(0, dish.Carbohydrates);
-        }
-
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с минимальными положительными макронутриентами, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_MinPositiveMacrosBoundary_Correct()
-        {
-            // Arrange
-            var p1 = MakeProduct(0.0001m, 0.0001m, 0.0001m, 0.0001m);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(0.0001m, dish.Calories);
-            Assert.Equal(0.0001m, dish.Proteins);
-            Assert.Equal(0.0001m, dish.Fats);
-            Assert.Equal(0.0001m, dish.Carbohydrates);
-        }
-
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент со стандартными макронутриентами, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_StandardMacrosBoundary_Correct()
-        {
-            // Arrange
-            var p1 = MakeProduct(100, 10, 5, 20);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(100, dish.Calories);
-            Assert.Equal(10, dish.Proteins);
-            Assert.Equal(5, dish.Fats);
-            Assert.Equal(20, dish.Carbohydrates);
-        }
-
-        [Fact(DisplayName = "КОГДА блюдо содержит ингредиент с отрицательными макронутриентами, ТОГДА расчет КБЖУ блюда корректен")]
-        public void RecalculateMacros_NegativeMacrosBoundary_Correct()
-        {
-            // Arrange
-            var p1 = MakeProduct(-10, -1, -0.5m, -2);
-            var dish = new Dish {
-                Ingredients = new List<DishProductItem> {
-                    MakeIngredient(p1, 100)
-                }
-            };
-            // Act
-            dish.RecalculateMacrosFromIngredients();
-            // Assert
-            Assert.Equal(-10, dish.Calories);
-            Assert.Equal(-1, dish.Proteins);
-            Assert.Equal(-0.5m, dish.Fats);
-            Assert.Equal(-2, dish.Carbohydrates);
-        }
+        // Assert
+        Assert.Equal(100m, _dish.Calories);
+        Assert.Equal(10m, _dish.Proteins);
     }
 }

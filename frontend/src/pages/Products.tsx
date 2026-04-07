@@ -4,7 +4,7 @@ import {
   FormControl, Stack, Grid, Card, CardMedia, CardContent,
   alpha, useTheme, Chip, InputAdornment, Tooltip
 } from '@mui/material';
-import { Plus, Edit2, Trash2, Search, Filter, ArrowUpDown, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, ArrowUpDown, Package } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getProducts, deleteProduct } from '../api';
 import type { ProductDto } from '../api/types';
@@ -19,13 +19,22 @@ export default function Products() {
   
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
+  const [necessity, setNecessity] = useState<string>('');
+  const [flags, setFlags] = useState<number>(0);
   const [sortBy, setSortBy] = useState('title');
 
   const fetchProducts = useMemo(() => async () => {
     try {
+      const selectedFlags = [];
+      if (flags & DietaryFlags.Vegan) selectedFlags.push('Vegan');
+      if (flags & DietaryFlags.GlutenFree) selectedFlags.push('GlutenFree');
+      if (flags & DietaryFlags.SugarFree) selectedFlags.push('SugarFree');
+
       const data = await getProducts({ 
         query, 
         category: category || undefined, 
+        necessity: necessity || undefined,
+        flags: selectedFlags.length > 0 ? selectedFlags.join(',') : undefined,
         sort: sortBy
       });
       setProducts(data);
@@ -33,11 +42,15 @@ export default function Products() {
       console.error(e);
       setProducts([]);
     }
-  }, [query, category, sortBy]);
+  }, [query, category, necessity, flags, sortBy]);
 
   useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  const toggleFlag = (flag: number) => {
+    setFlags(prev => prev ^ flag);
+  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -73,13 +86,13 @@ export default function Products() {
         </Button>
       </Stack>
 
-      <Paper sx={{ p: 3, mb: 6, borderRadius: 4, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+      <Paper sx={{ p: 3, mb: 6, borderRadius: 4, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', bgcolor: alpha(theme.palette.background.paper, 0.8), backdropFilter: 'blur(10px)' }}>
         <TextField
           placeholder="Поиск ингредиентов..."
           size="medium"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          sx={{ flexGrow: 1, minWidth: '300px' }}
+          sx={{ flexGrow: 1, minWidth: '250px' }}
           InputProps={{ 
             startAdornment: (
               <InputAdornment position="start">
@@ -89,13 +102,12 @@ export default function Products() {
           }}
         />
         
-        <Stack direction="row" spacing={2} sx={{ flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
           <FormControl size="medium" sx={{ minWidth: 160 }}>
             <Select 
               value={category} 
               onChange={(e) => setCategory(e.target.value)}
               displayEmpty
-              startAdornment={<Filter size={18} style={{ marginRight: 8, opacity: 0.6 }} />}
             >
               <MenuItem value="">Все категории</MenuItem>
               {Object.entries(ProductCategoryLabels).map(([val, label]) => (
@@ -103,6 +115,46 @@ export default function Products() {
               ))}
             </Select>
           </FormControl>
+
+          <FormControl size="medium" sx={{ minWidth: 160 }}>
+            <Select 
+              value={necessity} 
+              onChange={(e) => setNecessity(e.target.value)}
+              displayEmpty
+            >
+              <MenuItem value="">Любая готовка</MenuItem>
+              <MenuItem value="ReadyToEat">Готовый</MenuItem>
+              <MenuItem value="SemiFinished">Полуфабрикат</MenuItem>
+              <MenuItem value="RequiresCooking">Готовить</MenuItem>
+            </Select>
+          </FormControl>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip 
+              label="Веган" 
+              size="medium" 
+              onClick={() => toggleFlag(DietaryFlags.Vegan)}
+              color={flags & DietaryFlags.Vegan ? "success" : "default"}
+              variant={flags & DietaryFlags.Vegan ? "filled" : "outlined"}
+              sx={{ borderRadius: 2 }}
+            />
+            <Chip 
+              label="Без Глют." 
+              size="medium" 
+              onClick={() => toggleFlag(DietaryFlags.GlutenFree)}
+              color={flags & DietaryFlags.GlutenFree ? "warning" : "default"}
+              variant={flags & DietaryFlags.GlutenFree ? "filled" : "outlined"}
+              sx={{ borderRadius: 2 }}
+            />
+            <Chip 
+              label="Без Сах." 
+              size="medium" 
+              onClick={() => toggleFlag(DietaryFlags.SugarFree)}
+              color={flags & DietaryFlags.SugarFree ? "info" : "default"}
+              variant={flags & DietaryFlags.SugarFree ? "filled" : "outlined"}
+              sx={{ borderRadius: 2 }}
+            />
+          </Stack>
 
           <FormControl size="medium" sx={{ minWidth: 160 }}>
             <Select 
@@ -117,8 +169,9 @@ export default function Products() {
               <MenuItem value="carbohydrates">Углеводы</MenuItem>
             </Select>
           </FormControl>
-        </Stack>
+        </Box>
       </Paper>
+
 
       <Grid container spacing={3}>
         {products.length === 0 && (
@@ -241,6 +294,8 @@ export default function Products() {
           description={selectedProduct.description ?? undefined}
           flags={selectedProduct.flags}
           categoryName={ProductCategoryLabels[selectedProduct.category]}
+          dateCreated={selectedProduct.dateCreated}
+          dateModified={selectedProduct.dateModified}
         />
       )}
     </Box>

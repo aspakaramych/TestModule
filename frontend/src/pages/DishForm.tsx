@@ -41,6 +41,7 @@ export default function DishForm() {
     flags: DietaryFlags.None,
   });
 
+
   const [kbjuManual, setKbjuManual] = useState(false);
 
   useEffect(() => {
@@ -69,7 +70,7 @@ export default function DishForm() {
     if (!form.ingredients || form.ingredients.length === 0) return DietaryFlags.None;
     let isVegan = true, isGlutenFree = true, isSugarFree = true;
 
-    form.ingredients.forEach(ing => {
+    form.ingredients.forEach((ing: any) => {
       const p = products.find(prod => prod.id === ing.productId);
       if (p) {
         if (!(p.flags & DietaryFlags.Vegan)) isVegan = false;
@@ -88,7 +89,7 @@ export default function DishForm() {
   useEffect(() => {
     const newFlags = form.flags & supportedFlags;
     if (newFlags !== form.flags) {
-      setForm(prev => ({ ...prev, flags: (newFlags as DietaryFlags) }));
+      setForm((prev: DishCreateDto) => ({ ...prev, flags: (newFlags as DietaryFlags) }));
     }
   }, [supportedFlags, form.flags]);
 
@@ -106,7 +107,7 @@ export default function DishForm() {
 
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { cleanTitle, category } = processMacros(e.target.value);
-    setForm(prev => ({ 
+    setForm((prev: DishCreateDto) => ({ 
       ...prev, 
       title: cleanTitle, 
       ...(category !== null ? { category: category as DishCategory } : {}) 
@@ -116,15 +117,16 @@ export default function DishForm() {
   const handleKbjuChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setKbjuManual(true);
-    setForm(prev => ({ ...prev, [name]: value === '' ? 0 : Number(value) }));
+    setForm((prev: DishCreateDto) => ({ ...prev, [name]: value === '' ? '' : value }));
   };
 
-  const bjuSumTotal = form.proteins + form.fats + form.carbohydrates;
-  const bjuPer100 = form.portionSize > 0 ? (bjuSumTotal / form.portionSize) * 100 : 0;
+  const bjuSumTotal = Number(form.proteins || 0) + Number(form.fats || 0) + Number(form.carbohydrates || 0);
+  const bjuPer100 = Number(form.portionSize || 0) > 0 ? (bjuSumTotal / Number(form.portionSize)) * 100 : 0;
   const isBjuInvalid = bjuPer100 > 100.1;
 
+
   const handleFlagChange = (flag: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({
+    setForm((prev: DishCreateDto) => ({
       ...prev,
       flags: (e.target.checked ? prev.flags | flag : prev.flags & ~flag) as DietaryFlags
     }));
@@ -133,7 +135,7 @@ export default function DishForm() {
   useEffect(() => {
     if (kbjuManual) return;
     let cal = 0, p = 0, f = 0, c = 0;
-    form.ingredients?.forEach(ing => {
+    form.ingredients?.forEach((ing: any) => {
       const prod = products.find(pr => pr.id === ing.productId);
       if (prod) {
         cal += (prod.calories * ing.amountInGrams) / 100;
@@ -142,7 +144,7 @@ export default function DishForm() {
         c += (prod.carbohydrates * ing.amountInGrams) / 100;
       }
     });
-    setForm(prev => ({
+    setForm((prev: DishCreateDto) => ({
       ...prev,
       calories: Math.round(cal * 10) / 10,
       proteins: Math.round(p * 10) / 10,
@@ -152,11 +154,10 @@ export default function DishForm() {
   }, [form.ingredients, products, kbjuManual]);
 
   const handleAddIngredient = () => {
-    if (products.length === 0) return;
     setKbjuManual(false);
-    setForm(prev => ({
+    setForm((prev: DishCreateDto) => ({
       ...prev,
-      ingredients: [...(prev.ingredients || []), { productId: products[0].id, amountInGrams: 100 }]
+      ingredients: [...(prev.ingredients || []), { productId: '', amountInGrams: 100 }]
     }));
   };
 
@@ -164,17 +165,21 @@ export default function DishForm() {
     setKbjuManual(false);
     const copy = [...(form.ingredients || [])];
     copy[index] = { productId, amountInGrams };
-    setForm(prev => ({ ...prev, ingredients: copy }));
+    setForm((prev: DishCreateDto) => ({ ...prev, ingredients: copy }));
   };
 
   const removeIngredient = (index: number) => {
     setKbjuManual(false);
-    setForm(prev => ({ ...prev, ingredients: (prev.ingredients || []).filter((_, i) => i !== index) }));
+    setForm((prev: DishCreateDto) => ({ ...prev, ingredients: (prev.ingredients || []).filter((_: any, i: number) => i !== index) }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isBjuInvalid) return;
+    if (form.ingredients?.some((ing: any) => !ing.productId)) {
+      alert('Пожалуйста, выберите продукт для всех ингредиентов.');
+      return;
+    }
     try {
       if (isEdit && id) {
         await updateDish(id, { ...form, id } as any);
@@ -212,12 +217,12 @@ export default function DishForm() {
                     value={form.title ?? ''} onChange={handleTitleChange} 
                   />
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
-                    <TextField select fullWidth label="Категория" value={form.category} onChange={(e) => setForm(p => ({...p, category: Number(e.target.value) as DishCategory}))}>
+                    <TextField select fullWidth label="Категория" value={form.category} onChange={(e) => setForm((p: DishCreateDto) => ({...p, category: Number(e.target.value) as DishCategory}))}>
                        {Object.entries(DishCategoryLabels).map(([val, label]) => (
                         <MenuItem key={val} value={Number(val)}>{label}</MenuItem>
                       ))}
                     </TextField>
-                    <TextField fullWidth type="number" label="Вес порции (г)" value={form.portionSize || ''} onChange={(e) => setForm(p => ({...p, portionSize: Number(e.target.value)}))} />
+                    <TextField fullWidth type="number" label="Вес порции (г)" value={form.portionSize} onChange={(e) => setForm((p: DishCreateDto) => ({...p, portionSize: Number(e.target.value)}))} />
                   </Box>
                 </Stack>
               </Paper>
@@ -228,9 +233,10 @@ export default function DishForm() {
                   Ингредиенты
                 </Typography>
                 <Stack spacing={2}>
-                  {(form.ingredients || []).map((ing, i) => (
+                  {(form.ingredients || []).map((ing: any, i: number) => (
                     <Box key={i} sx={{ display: 'flex', gap: 2, alignItems: 'center', p: 2, bgcolor: alpha(theme.palette.background.default, 0.4), borderRadius: 3 }}>
-                      <TextField select fullWidth label="Продукт" size="small" value={ing.productId} onChange={e => updateIngredient(i, e.target.value, ing.amountInGrams)}>
+                      <TextField select fullWidth label="Продукт" size="small" value={ing.productId || ''} onChange={e => updateIngredient(i, e.target.value, ing.amountInGrams)} SelectProps={{ displayEmpty: true }}>
+                        <MenuItem value="" disabled>Выберите продукт</MenuItem>
                         {products.map(p => <MenuItem key={p.id} value={p.id}>{p.title}</MenuItem>)}
                       </TextField>
                       <TextField type="number" label="Вес (г)" size="small" sx={{ width: 120 }} value={ing.amountInGrams || ''} onChange={e => updateIngredient(i, ing.productId, Number(e.target.value))} />
@@ -249,7 +255,7 @@ export default function DishForm() {
             <Stack spacing={4}>
               <Paper sx={{ p: 4, borderRadius: 4 }}>
                 <Typography variant="h6" sx={{ mb: 3, fontWeight: 700 }}>Внешний вид</Typography>
-                <PhotoUpload photos={form.photos ?? []} onChange={(photos) => setForm(p => ({...p, photos}))} />
+                <PhotoUpload photos={form.photos ?? []} onChange={(photos) => setForm((p: DishCreateDto) => ({...p, photos}))} />
               </Paper>
 
               <Paper sx={{ p: 4, borderRadius: 4, bgcolor: kbjuManual ? alpha(theme.palette.warning.main, 0.05) : 'background.paper' }}>
@@ -264,11 +270,11 @@ export default function DishForm() {
                 
                 <Grid container spacing={2}>
                   <Grid size={12}>
-                    <TextField fullWidth type="number" label="Калории (ккал)" name="calories" value={form.calories || ''} onChange={handleKbjuChange} />
+                    <TextField fullWidth type="number" label="Калории (ккал)" name="calories" value={form.calories} onChange={handleKbjuChange} />
                   </Grid>
-                  <Grid size={4}><TextField fullWidth type="number" label="Белки" name="proteins" value={form.proteins || ''} onChange={handleKbjuChange} error={isBjuInvalid} /></Grid>
-                  <Grid size={4}><TextField fullWidth type="number" label="Жиры" name="fats" value={form.fats || ''} onChange={handleKbjuChange} error={isBjuInvalid} /></Grid>
-                  <Grid size={4}><TextField fullWidth type="number" label="Углев." name="carbohydrates" value={form.carbohydrates || ''} onChange={handleKbjuChange} error={isBjuInvalid} /></Grid>
+                  <Grid size={4}><TextField fullWidth type="number" label="Белки" name="proteins" value={form.proteins} onChange={handleKbjuChange} error={isBjuInvalid} /></Grid>
+                  <Grid size={4}><TextField fullWidth type="number" label="Жиры" name="fats" value={form.fats} onChange={handleKbjuChange} error={isBjuInvalid} /></Grid>
+                  <Grid size={4}><TextField fullWidth type="number" label="Углев." name="carbohydrates" value={form.carbohydrates} onChange={handleKbjuChange} error={isBjuInvalid} /></Grid>
                 </Grid>
 
                 {isBjuInvalid && (

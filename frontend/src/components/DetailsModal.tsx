@@ -19,15 +19,31 @@ interface DetailsModalProps {
   flags?: number;
   categoryName?: string;
   ingredients?: { productName: string; amount: number }[];
+  dateCreated?: string;
+  dateModified?: string;
 }
 
 export default function DetailsModal({
   open, onClose, title, photos, calories, proteins, fats, carbohydrates, 
-  description, flags, categoryName, ingredients
+  description, flags, categoryName, ingredients, dateCreated, dateModified
 }: DetailsModalProps) {
   const theme = useTheme();
   const hasPhotos = photos && photos.length > 0;
   const [photoIdx, setPhotoIdx] = useState(0);
+
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return null;
+    try {
+      const d = new Date(dateString);
+      return d.toLocaleString('ru-RU', { 
+        day: '2-digit', month: '2-digit', year: 'numeric', 
+        hour: '2-digit', minute: '2-digit' 
+      });
+    } catch {
+      return dateString;
+    }
+  };
+
 
   // Сброс индекса при открытии/смене фото
   React.useEffect(() => { setPhotoIdx(0); }, [open, photos]);
@@ -219,7 +235,27 @@ export default function DetailsModal({
                   </Stack>
                 </Box>
               )}
+
+              {(dateCreated || dateModified) && (
+                <Box sx={{ mt: 4, pt: 2, borderTop: '1px solid ' + alpha(theme.palette.divider, 0.05) }}>
+                  <Grid container spacing={2}>
+                    {dateCreated && (
+                      <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary" display="block">Дата создания</Typography>
+                        <Typography variant="caption" fontWeight={600}>{formatDate(dateCreated)}</Typography>
+                      </Grid>
+                    )}
+                    {dateModified && (
+                      <Grid size={6}>
+                        <Typography variant="caption" color="text.secondary" display="block">Дата изменения</Typography>
+                        <Typography variant="caption" fontWeight={600}>{formatDate(dateModified)}</Typography>
+                      </Grid>
+                    )}
+                  </Grid>
+                </Box>
+              )}
             </DialogContent>
+
           </Grid>
         </Grid>
       </Box>

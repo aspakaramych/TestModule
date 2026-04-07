@@ -100,11 +100,12 @@ export interface ProductUpdateDto extends ProductCreateDto {
 }
 
 export interface ProductDto extends ProductUpdateDto {
-  createdAt?: string;
-  updatedAt?: string;
+  dateCreated?: string;
+  dateModified?: string;
 }
 
 export interface DishDto extends DishUpdateDto {
-  createdAt?: string;
-  updatedAt?: string;
+  dateCreated?: string;
+  dateModified?: string;
 }
+

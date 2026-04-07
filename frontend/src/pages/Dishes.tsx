@@ -4,7 +4,7 @@ import {
   FormControl, Stack, Grid, Card, CardMedia, CardContent,
   alpha, useTheme, Chip, InputAdornment, Tooltip
 } from '@mui/material';
-import { Plus, Edit2, Trash2, Search, Filter, Utensils, Eye, PieChart } from 'lucide-react';
+import { Plus, Edit2, Trash2, Search, Utensils, Eye, PieChart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getDishes, deleteDish, getProducts } from '../api';
 import type { DishDto, ProductDto, DishIngredientDto } from '../api/types';
@@ -20,20 +20,26 @@ export default function Dishes() {
   
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState<string>('');
+  const [flags, setFlags] = useState<number>(0);
 
   const fetchDishes = useMemo(() => async () => {
     try {
+      const selectedFlags = [];
+      if (flags & DietaryFlags.Vegan) selectedFlags.push('Vegan');
+      if (flags & DietaryFlags.GlutenFree) selectedFlags.push('GlutenFree');
+      if (flags & DietaryFlags.SugarFree) selectedFlags.push('SugarFree');
+
       const data = await getDishes({ 
         query, 
         category: category || undefined, 
-        flags: undefined
+        flags: selectedFlags.length > 0 ? selectedFlags.join(',') : undefined
       });
       setDishes(data);
     } catch (e) {
       console.error(e);
       setDishes([]);
     }
-  }, [query, category]);
+  }, [query, category, flags]);
 
   useEffect(() => {
     getProducts({}).then(setProducts).catch(console.error);
@@ -42,6 +48,10 @@ export default function Dishes() {
   useEffect(() => {
     fetchDishes();
   }, [fetchDishes]);
+
+  const toggleFlag = (flag: number) => {
+    setFlags(prev => prev ^ flag);
+  };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -89,7 +99,7 @@ export default function Dishes() {
         </Button>
       </Stack>
 
-      <Paper sx={{ p: 3, mb: 6, borderRadius: 4, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center' }}>
+      <Paper sx={{ p: 3, mb: 6, borderRadius: 4, display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', bgcolor: alpha(theme.palette.background.paper, 0.8), backdropFilter: 'blur(10px)' }}>
         <TextField
           placeholder="Поиск блюд..."
           size="medium"
@@ -105,13 +115,12 @@ export default function Dishes() {
           }}
         />
         
-        <Stack direction="row" spacing={2} sx={{ flexShrink: 0 }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
           <FormControl size="medium" sx={{ minWidth: 200 }}>
             <Select 
               value={category} 
               onChange={(e: any) => setCategory(e.target.value)}
               displayEmpty
-              startAdornment={<Filter size={18} style={{ marginRight: 8, opacity: 0.6 }} />}
             >
               <MenuItem value="">Все категории</MenuItem>
               {Object.entries(DishCategoryLabels).map(([val, label]) => (
@@ -119,8 +128,36 @@ export default function Dishes() {
               ))}
             </Select>
           </FormControl>
-        </Stack>
+
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Chip 
+              label="Веган" 
+              size="medium" 
+              onClick={() => toggleFlag(DietaryFlags.Vegan)}
+              color={flags & DietaryFlags.Vegan ? "success" : "default"}
+              variant={flags & DietaryFlags.Vegan ? "filled" : "outlined"}
+              sx={{ borderRadius: 2 }}
+            />
+            <Chip 
+              label="Без Глют." 
+              size="medium" 
+              onClick={() => toggleFlag(DietaryFlags.GlutenFree)}
+              color={flags & DietaryFlags.GlutenFree ? "warning" : "default"}
+              variant={flags & DietaryFlags.GlutenFree ? "filled" : "outlined"}
+              sx={{ borderRadius: 2 }}
+            />
+            <Chip 
+              label="Без Сах." 
+              size="medium" 
+              onClick={() => toggleFlag(DietaryFlags.SugarFree)}
+              color={flags & DietaryFlags.SugarFree ? "info" : "default"}
+              variant={flags & DietaryFlags.SugarFree ? "filled" : "outlined"}
+              sx={{ borderRadius: 2 }}
+            />
+          </Stack>
+        </Box>
       </Paper>
+
 
       <Grid container spacing={4}>
         {dishes.length === 0 && (
@@ -264,6 +301,8 @@ export default function Dishes() {
           flags={selectedDish.flags}
           categoryName={DishCategoryLabels[selectedDish.category]}
           ingredients={modalIngredients}
+          dateCreated={selectedDish.dateCreated}
+          dateModified={selectedDish.dateModified}
         />
       )}
     </Box>

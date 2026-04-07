@@ -32,33 +32,36 @@ export default function ProductForm() {
   useEffect(() => {
     if (isEdit && id) {
       getProductById(id).then(data => {
-        if (data) setForm(data as ProductCreateDto);
+        if (data) setForm(data);
       }).catch(console.error);
     }
   }, [id, isEdit]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setForm(prev => ({
+    const isNumeric = ['calories', 'proteins', 'fats', 'carbohydrates'].includes(name);
+    
+    setForm((prev: ProductCreateDto) => ({
       ...prev,
-      [name]: ['calories', 'proteins', 'fats', 'carbohydrates', 'category', 'necessity'].includes(name)
-        ? (value === '' ? 0 : Number(value))
+      [name]: isNumeric
+        ? (value === '' ? '' : value) // Keep as string to allow clearing
         : value
     }));
   };
 
-  const bjuSum = form.proteins + form.fats + form.carbohydrates;
+  const bjuSum = Number(form.proteins || 0) + Number(form.fats || 0) + Number(form.carbohydrates || 0);
   const isBjuInvalid = bjuSum > 100;
 
+
   const handleFlagChange = (flag: number) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(prev => ({
+    setForm((prev: ProductCreateDto) => ({
       ...prev,
       flags: (e.target.checked ? prev.flags | flag : prev.flags & ~flag) as DietaryFlags
     }));
   };
 
   const handlePhotosChange = (photos: string[]) => {
-    setForm(prev => ({ ...prev, photos }));
+    setForm((prev: ProductCreateDto) => ({ ...prev, photos }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,7 +157,7 @@ export default function ProductForm() {
                       required 
                       label="Энергия (ккал)" 
                       name="calories" 
-                      value={form.calories || ''} 
+                      value={form.calories} 
                       onChange={handleChange} 
                     />
                   </Grid>
@@ -167,13 +170,13 @@ export default function ProductForm() {
                      </Box>
                   </Grid>
                   <Grid size={4}>
-                    <TextField fullWidth type="number" required label="Белки (г)" name="proteins" value={form.proteins || ''} onChange={handleChange} error={isBjuInvalid} />
+                    <TextField fullWidth type="number" required label="Белки (г)" name="proteins" value={form.proteins} onChange={handleChange} error={isBjuInvalid} />
                   </Grid>
                   <Grid size={4}>
-                    <TextField fullWidth type="number" required label="Жиры (г)" name="fats" value={form.fats || ''} onChange={handleChange} error={isBjuInvalid} />
+                    <TextField fullWidth type="number" required label="Жиры (г)" name="fats" value={form.fats} onChange={handleChange} error={isBjuInvalid} />
                   </Grid>
                   <Grid size={4}>
-                    <TextField fullWidth type="number" required label="Углеводы (г)" name="carbohydrates" value={form.carbohydrates || ''} onChange={handleChange} error={isBjuInvalid} />
+                    <TextField fullWidth type="number" required label="Углеводы (г)" name="carbohydrates" value={form.carbohydrates} onChange={handleChange} error={isBjuInvalid} />
                   </Grid>
                 </Grid>
                 {isBjuInvalid && (
