@@ -12,6 +12,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Migrator", "Migrator\Migrat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Domain.UnitTests", "Domain.UnitTests\Domain.UnitTests.csproj", "{6C959E03-7406-4942-AC98-FC5C9600D5E9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestModule.Backend.IntegrationTests", "TestModule.Backend.IntegrationTests\TestModule.Backend.IntegrationTests.csproj", "{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -94,6 +96,18 @@ Global
 		{6C959E03-7406-4942-AC98-FC5C9600D5E9}.Release|x64.Build.0 = Release|Any CPU
 		{6C959E03-7406-4942-AC98-FC5C9600D5E9}.Release|x86.ActiveCfg = Release|Any CPU
 		{6C959E03-7406-4942-AC98-FC5C9600D5E9}.Release|x86.Build.0 = Release|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Debug|x64.Build.0 = Debug|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Debug|x86.Build.0 = Debug|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Release|x64.ActiveCfg = Release|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Release|x64.Build.0 = Release|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Release|x86.ActiveCfg = Release|Any CPU
+		{26F10F11-BF1C-4FAA-804D-D21B9B93EEDE}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

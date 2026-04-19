@@ -14,13 +14,13 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    serverOptions.Limits.MaxRequestBodySize = 52428800; 
+    serverOptions.Limits.MaxRequestBodySize = 52428800;
 });
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ??
                        "Host=localhost;Port=5432;Database=recipes;Username=postgres;Password=postgres";
 
 builder.Services.AddLinqToDBContext<AppDbContext>((provider, options) =>
@@ -43,3 +43,6 @@ app.MapProductEndpoints();
 app.MapDishEndpoints();
 
 app.Run();
+
+// Make Program class available for testing
+public partial class Program { }

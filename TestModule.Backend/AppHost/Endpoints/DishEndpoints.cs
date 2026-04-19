@@ -30,8 +30,15 @@ public static class DishEndpoints
 
         group.MapPost("/", async (DishCreateDto dto, IDishProvider provider) =>
         {
-            var res = await provider.CreateDishAsync(dto);
-            return Results.Created($"/api/dishes/{res.Id}", res);
+            try
+            {
+                var res = await provider.CreateDishAsync(dto);
+                return Results.Created($"/api/dishes/{res.Id}", res);
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
         });
 
         group.MapPut("/{id:guid}", async (Guid id, DishUpdateDto dto, IDishProvider provider) =>
