@@ -87,8 +87,16 @@ public class ProductProvider : IProductProvider
 
         if (categories != null && categories.Any())
         {
-            var parsedCats = categories.Select(c => Enum.Parse<ProductCategory>(c, true)).ToList();
-            all = all.Where(x => parsedCats.Contains(x.Category)).ToList();
+            var parsedCats = categories
+                .Select(c => Enum.TryParse<ProductCategory>(c, true, out var res) ? (ProductCategory?)res : null)
+                .Where(c => c.HasValue)
+                .Select(c => c!.Value)
+                .ToList();
+            
+            if (parsedCats.Any())
+            {
+                all = all.Where(x => parsedCats.Contains(x.Category)).ToList();
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(necessity))
@@ -101,7 +109,12 @@ public class ProductProvider : IProductProvider
 
         if (flags != null && flags.Any())
         {
-            var parsedFlags = flags.Select(f => Enum.Parse<DietaryFlags>(f, true)).ToList();
+            var parsedFlags = flags
+                .Select(f => Enum.TryParse<DietaryFlags>(f, true, out var res) ? (DietaryFlags?)res : null)
+                .Where(f => f.HasValue)
+                .Select(f => f!.Value)
+                .ToList();
+
             foreach (var flag in parsedFlags)
             {
                 all = all.Where(x => x.Flags.HasFlag(flag)).ToList();

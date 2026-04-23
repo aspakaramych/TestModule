@@ -44,7 +44,8 @@ public static class DatabaseFixture
         }
     }
 
-    public static async Task CleanSeedAsync()
+    public static Task CleanSeedAsync()
     {
+        return Task.CompletedTask;
     }
 }

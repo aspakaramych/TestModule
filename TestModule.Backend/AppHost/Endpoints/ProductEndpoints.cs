@@ -30,8 +30,15 @@ public static class ProductEndpoints
 
         group.MapPost("/", async (ProductCreateDto dto, IProductProvider provider) =>
         {
-            var res = await provider.CreateProductAsync(dto);
-            return Results.Created($"/api/products/{res.Id}", res);
+            try
+            {
+                var res = await provider.CreateProductAsync(dto);
+                return Results.Created($"/api/products/{res.Id}", res);
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
         });
 
         group.MapPut("/{id:guid}", async (Guid id, ProductUpdateDto dto, IProductProvider provider) =>

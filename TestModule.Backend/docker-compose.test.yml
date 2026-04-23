@@ -25,3 +25,17 @@ services:
       db-test:
         condition: service_healthy
     restart: "no"
+  app-test:
+    build:
+      context: .
+      dockerfile: Dockerfile.AppHost
+    environment:
+      ConnectionStrings__DefaultConnection: "Host=db-test;Port=5432;Database=recipes_test;Username=postgres;Password=test_password"
+      ASPNETCORE_ENVIRONMENT: "Development"
+    ports:
+      - "5001:8080"
+    depends_on:
+      db-test:
+        condition: service_healthy
+      migrator-test:
+        condition: service_completed_successfully

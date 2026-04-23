@@ -161,13 +161,26 @@ public class DishProvider : IDishProvider
 
         if (categories != null && categories.Any())
         {
-            var parsedCats = categories.Select(c => Enum.Parse<DishCategory>(c, true)).ToList();
-            all = all.Where(x => parsedCats.Contains(x.Category)).ToList();
+            var parsedCats = categories
+                .Select(c => Enum.TryParse<DishCategory>(c, true, out var res) ? (DishCategory?)res : null)
+                .Where(c => c.HasValue)
+                .Select(c => c!.Value)
+                .ToList();
+
+            if (parsedCats.Any())
+            {
+                all = all.Where(x => parsedCats.Contains(x.Category)).ToList();
+            }
         }
 
         if (flags != null && flags.Any())
         {
-            var parsedFlags = flags.Select(f => Enum.Parse<DietaryFlags>(f, true)).ToList();
+            var parsedFlags = flags
+                .Select(f => Enum.TryParse<DietaryFlags>(f, true, out var res) ? (DietaryFlags?)res : null)
+                .Where(f => f.HasValue)
+                .Select(f => f!.Value)
+                .ToList();
+
             foreach (var flag in parsedFlags)
             {
                 all = all.Where(x => x.Flags.HasFlag(flag)).ToList();

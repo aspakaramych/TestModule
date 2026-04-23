@@ -1,29 +1,43 @@
-using Microsoft.AspNetCore.Mvc.Testing;
-using AppHost;
 using Xunit;
+using System.Net.Http;
 
 namespace TestModule.Backend.IntegrationTests.Fixtures;
 
 public class ApiFixture : IAsyncLifetime
 {
-    private WebApplicationFactory<Program>? _factory;
+    private HttpClient? _client;
+    public HttpClient Client => _client ?? throw new InvalidOperationException("Client not initialized");
 
-    public WebApplicationFactory<Program> Factory => _factory ?? throw new InvalidOperationException("Fixture not initialized");
+    public const string BaseUrl = "http://localhost:5001";
 
     public async Task InitializeAsync()
     {
         await DatabaseFixture.SeedAsync();
-
-        _factory = new WebApplicationFactory<Program>()
-            .WithWebHostBuilder(builder =>
-            {
-                builder.UseSetting("ConnectionStrings:DefaultConnection", DatabaseFixture.ConnectionString);
-            });
+        _client = new HttpClient { BaseAddress = new Uri(BaseUrl) };
+        await WaitForApiReadyAsync();
     }
 
-    public async Task DisposeAsync()
+    private async Task WaitForApiReadyAsync()
     {
-        if (_factory != null) await _factory.DisposeAsync();
-        await DatabaseFixture.CleanSeedAsync();
+        int maxRetries = 10;
+        for (int i = 0; i < maxRetries; i++)
+        {
+            try
+            {
+                var response = await Client.GetAsync("/api/products");
+                if (response.IsSuccessStatusCode) return;
+            }
+            catch
+            {
+            }
+            await Task.Delay(2000);
+        }
+        throw new Exception($"API at {BaseUrl} is still not ready after {maxRetries} retries.");
+    }
+
+    public Task DisposeAsync()
+    {
+        _client?.Dispose();
+        return Task.CompletedTask;
     }
 }

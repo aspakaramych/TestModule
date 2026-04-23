@@ -3,22 +3,8 @@ using Domain.Models;
 
 namespace TestModule.Backend.IntegrationTests.TestData;
 
-/// <summary>
-/// Тестовые данные для Products.
-///
-/// Эквивалентные классы:
-///   EC1 — валидный продукт (все поля), EC2 — минимальный (нули/null),
-///   EC3 — Unicode/спецсимволы в Title, EC4 — все ProductCategory и CookingNecessity,
-///   EC5 — комбинации DietaryFlags.
-///
-/// Граничные значения:
-///   BV1 Calories=0, BV2 Calories=0.01, BV3 Calories=9000,
-///   BV4 Title длиной 1 символ, BV5 Title > 100 символов,
-///   BV6 decimal precision 0.01 для КБЖУ.
-/// </summary>
 public static class ProductTestDataFactory
 {
-    /// <summary>EC1: валидный продукт со всеми полями.</summary>
     public static ProductCreateDto CreateValidProduct(string title = "Test Product") =>
         new()
         {
@@ -34,7 +20,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC2: минимальный продукт — нулевые КБЖУ, Description=null.</summary>
     public static ProductCreateDto CreateMinimalProduct() =>
         new()
         {
@@ -50,7 +35,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC3: Title с Unicode и спецсимволами.</summary>
     public static ProductCreateDto CreateSpecialCharacterTitleProduct() =>
         new()
         {
@@ -64,7 +48,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.Vegan
         };
 
-    /// <summary>EC4: продукт заданной категории.</summary>
     public static ProductCreateDto CreateProductInCategory(ProductCategory category) =>
         new()
         {
@@ -78,7 +61,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC4: продукт с заданным уровнем необходимости приготовления.</summary>
     public static ProductCreateDto CreateProductWithNecessity(CookingNecessity necessity) =>
         new()
         {
@@ -92,7 +74,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC5: флаг Vegan.</summary>
     public static ProductCreateDto CreateVeganProduct() =>
         new()
         {
@@ -107,7 +88,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.Vegan
         };
 
-    /// <summary>EC5: флаг GlutenFree.</summary>
     public static ProductCreateDto CreateGlutenFreeProduct() =>
         new()
         {
@@ -121,7 +101,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.GlutenFree
         };
 
-    /// <summary>EC5: все три флага сразу — Vegan | GlutenFree | SugarFree.</summary>
     public static ProductCreateDto CreateComplexDietaryFlagsProduct() =>
         new()
         {
@@ -135,7 +114,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.Vegan | DietaryFlags.GlutenFree | DietaryFlags.SugarFree
         };
 
-    /// <summary>BV1: Calories=0 (нижняя граница).</summary>
     public static ProductCreateDto CreateZeroCalorieProduct() =>
         new()
         {
@@ -149,7 +127,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV2: Calories=0.01 (чуть выше нижней границы).</summary>
     public static ProductCreateDto CreateJustAboveZeroCalorieProduct() =>
         new()
         {
@@ -163,7 +140,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV3: Calories=9000 (верхняя практическая граница).</summary>
     public static ProductCreateDto CreateHighCalorieProduct() =>
         new()
         {
@@ -177,7 +153,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV4: Title длиной 1 символ (минимальная длина).</summary>
     public static ProductCreateDto CreateMinLengthTitleProduct() =>
         new()
         {
@@ -191,7 +166,6 @@ public static class ProductTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV5: Title длиннее 100 символов.</summary>
     public static ProductCreateDto CreateLongTitleProduct() =>
         new()
         {
@@ -208,21 +182,8 @@ public static class ProductTestDataFactory
         };
 }
 
-/// <summary>
-/// Тестовые данные для Dishes.
-///
-/// Эквивалентные классы:
-///   EC1 — валидное блюдо с ингредиентами, EC2 — без ингредиентов,
-///   EC3 — макро-ключевые слова в Title ("!салат", "!десерт" …),
-///   EC4 — все DishCategory, EC5 — комбинации DietaryFlags.
-///
-/// Граничные значения:
-///   BV1 PortionSize=1000g, BV2 PortionSize=0.1g, BV3 PortionSize=0 (невалидно),
-///   BV6 сумма БЖУ/100g ровно = 100, BV7 сумма БЖУ/100g > 100 (невалидно).
-/// </summary>
 public static class DishTestDataFactory
 {
-    /// <summary>EC1: валидное блюдо без ингредиентов.</summary>
     public static DishCreateDto CreateValidDish(string title = "Test Dish") =>
         new()
         {
@@ -238,7 +199,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC2: минимальное блюдо — нулевые КБЖУ, пустой список ингредиентов.</summary>
     public static DishCreateDto CreateMinimalDish() =>
         new()
         {
@@ -254,7 +214,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC3: Title с макросом "!салат" — сервис должен установить Category=Salad.</summary>
     public static DishCreateDto CreateDishWithSaladMacroInTitle() =>
         new()
         {
@@ -269,7 +228,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.Vegan
         };
 
-    /// <summary>EC3: Title с макросом "!десерт" — сервис должен установить Category=Dessert.</summary>
     public static DishCreateDto CreateDishWithDessertMacroInTitle() =>
         new()
         {
@@ -284,7 +242,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC4: блюдо заданной категории.</summary>
     public static DishCreateDto CreateDishInCategory(DishCategory category) =>
         new()
         {
@@ -299,7 +256,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>EC5: флаг Vegan.</summary>
     public static DishCreateDto CreateVeganDish() =>
         new()
         {
@@ -314,7 +270,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.Vegan
         };
 
-    /// <summary>BV1: PortionSize=1000g (верхняя граница).</summary>
     public static DishCreateDto CreateLargePortionDish() =>
         new()
         {
@@ -329,7 +284,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV2: PortionSize=0.1g (нижняя валидная граница).</summary>
     public static DishCreateDto CreateSmallPortionDish() =>
         new()
         {
@@ -337,14 +291,13 @@ public static class DishTestDataFactory
             PortionSize = 0.1m,
             Category = DishCategory.Dessert,
             Ingredients = new List<DishIngredientDto>(),
-            Calories = 10m,
-            Proteins = 1m,
-            Fats = 0.5m,
-            Carbohydrates = 2m,
+            Calories = 0.3m,
+            Proteins = 0.03m,
+            Fats = 0.03m,
+            Carbohydrates = 0.04m,
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV3: PortionSize=0 — невалидная нижняя граница, должна вернуть 400.</summary>
     public static DishCreateDto CreateZeroPortionDish() =>
         new()
         {
@@ -359,7 +312,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV7: (Proteins+Fats+Carbs)/PortionSize*100 > 100 — невалидно, должно вернуть 400.</summary>
     public static DishCreateDto CreateMacrosTooHighDish() =>
         new()
         {
@@ -374,7 +326,6 @@ public static class DishTestDataFactory
             Flags = DietaryFlags.None
         };
 
-    /// <summary>BV6: (Proteins+Fats+Carbs)/PortionSize*100 ровно = 100 — граница включительно, должно пройти.</summary>
     public static DishCreateDto CreateMacrosAtExactLimitDish() =>
         new()
         {
