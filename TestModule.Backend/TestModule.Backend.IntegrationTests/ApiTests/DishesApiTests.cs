@@ -21,7 +21,7 @@ public class DishesApiTests
         _fixture = fixture;
     }
 
-    [Fact(DisplayName = "ЛОГИКА: Автоматический расчет КБЖУ по ингредиентам")]
+    [Fact(DisplayName = "КОГДА создается блюдо с ингредиентами, ТОГДА КБЖУ пересчитываются автоматически")]
     public async Task CreateDish_WithZeroMacros_RecalculatesFromIngredients()
     {
         var client = _fixture.Client;
@@ -39,7 +39,7 @@ public class DishesApiTests
         Assert.InRange(result.Proteins, 9.9m, 10.1m);
     }
 
-    [Theory(DisplayName = "ЛОГИКА: Изменение категории на основе макроса в названии")]
+    [Theory(DisplayName = "КОГДА в названии блюда есть макрос, ТОГДА категория устанавливается автоматически")]
     [InlineData("Весенний !салат", DishCategory.Salad)]
     [InlineData("Шоколадный !десерт", DishCategory.Dessert)]
     public async Task CreateDish_WithMacroInTitle_SetsCorrectCategory(string title, DishCategory expectedCategory)
@@ -55,7 +55,7 @@ public class DishesApiTests
         Assert.DoesNotContain("!", result.Title);
     }
 
-    [Theory(DisplayName = "УСПЕХ: Валидные граничные значения (PortionSize, Exact Macros)")]
+    [Theory(DisplayName = "КОГДА передаются валидные граничные значения, ТОГДА блюдо успешно создается")]
     [MemberData(nameof(GetValidBoundaryDishTestData))]
     public async Task CreateDish_ValidBoundaryValues_ReturnsCreated(DishCreateDto dto)
     {
@@ -66,12 +66,12 @@ public class DishesApiTests
 
     public static IEnumerable<object[]> GetValidBoundaryDishTestData()
     {
-        yield return new object[] { DishTestDataFactory.CreateSmallPortionDish() }; // 0.1g
-        yield return new object[] { DishTestDataFactory.CreateLargePortionDish() }; // 1000g
-        yield return new object[] { DishTestDataFactory.CreateMacrosAtExactLimitDish() }; // 100g/100g
+        yield return new object[] { DishTestDataFactory.CreateSmallPortionDish() };
+        yield return new object[] { DishTestDataFactory.CreateLargePortionDish() };
+        yield return new object[] { DishTestDataFactory.CreateMacrosAtExactLimitDish() };
     }
 
-    [Theory(DisplayName = "УСПЕХ: Создание блюда для всех категорий")]
+    [Theory(DisplayName = "КОГДА создается блюдо любой категории, ТОГДА оно успешно сохраняется")]
     [InlineData(DishCategory.FirstCourse)]
     [InlineData(DishCategory.SecondCourse)]
     [InlineData(DishCategory.Dessert)]
@@ -91,7 +91,7 @@ public class DishesApiTests
         Assert.Equal(category, result!.Category);
     }
 
-    [Theory(DisplayName = "ВАЛИДАЦИЯ: Проверка некорректных данных (BV3, BV7)")]
+    [Theory(DisplayName = "КОГДА передаются некорректные данные, ТОГДА возвращается ошибка валидации")]
     [MemberData(nameof(GetInvalidDishTestData))]
     public async Task CreateDish_InvalidData_ReturnsBadRequest(DishCreateDto dto, string expectedError)
     {
@@ -104,7 +104,7 @@ public class DishesApiTests
         Assert.Contains(expectedError, error);
     }
 
-    [Fact(DisplayName = "ЛОГИКА: Фильтрация некорректных диетических флагов по ингредиентам")]
+    [Fact(DisplayName = "КОГДА флаги блюда противоречат ингредиентам, ТОГДА некорректные флаги фильтруются")]
     public async Task CreateDish_WithConflictingFlags_FlagsAreFiltered()
     {
         var client = _fixture.Client;
@@ -125,7 +125,7 @@ public class DishesApiTests
         yield return new object[] { DishTestDataFactory.CreateMacrosTooHighDish(), "Sum of proteins, fats, and carbohydrates per 100g cannot exceed 100g" };
     }
 
-    [Fact(DisplayName = "СПИСОК: Получение блюд с фильтрацией по категории и флагам")]
+    [Fact(DisplayName = "КОГДА запрашивается список блюд с фильтрами, ТОГДА возвращаются только подходящие блюда")]
     public async Task GetDishes_WithFilters_ReturnsCorrectDishes()
     {
         var client = _fixture.Client;
@@ -138,7 +138,7 @@ public class DishesApiTests
         Assert.All(result!, d => Assert.Equal(DishCategory.Dessert, d.Category));
     }
 
-    [Fact(DisplayName = "ПОИСК: Поиск блюда по названию из начальных данных")]
+    [Fact(DisplayName = "КОГДА выполняется поиск по названию, ТОГДА возвращаются соответствующие блюда")]
     public async Task GetDishes_SearchByTitle_ReturnsExpectedDish()
     {
         var client = _fixture.Client;
@@ -149,7 +149,7 @@ public class DishesApiTests
         Assert.Contains(result!, d => d.Title.Contains("Тирамису"));
     }
 
-    [Fact(DisplayName = "ОБНОВЛЕНИЕ: Изменение существующего блюда")]
+    [Fact(DisplayName = "КОГДА обновляются данные существующего блюда, ТОГДА изменения успешно сохраняются")]
     public async Task UpdateDish_ValidUpdate_StoredCorrectly()
     {
         var client = _fixture.Client;
@@ -173,7 +173,7 @@ public class DishesApiTests
         Assert.Equal(333, updated.PortionSize);
     }
 
-    [Fact(DisplayName = "ОШИБКА: Обновление блюда с невалидным размером порции")]
+    [Fact(DisplayName = "КОГДА блюдо обновляется невалидными данными, ТОГДА возвращается ошибка")]
     public async Task UpdateDish_InvalidPortion_ReturnsBadRequest()
     {
         var client = _fixture.Client;
@@ -185,14 +185,14 @@ public class DishesApiTests
         { 
             Id = created!.Id, 
             Title = created.Title,
-            PortionSize = 0 // Invalid
+            PortionSize = 0
         };
 
         var response = await client.PutAsJsonAsync($"{DishUrl}/{created.Id}", updateDto);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact(DisplayName = "УДАЛЕНИЕ: Удаление блюда и проверка его отсутствия")]
+    [Fact(DisplayName = "КОГДА блюдо удаляется, ТОГДА оно больше не доступно в системе")]
     public async Task DeleteDish_Exists_RemovedSuccessfully()
     {
         var client = _fixture.Client;

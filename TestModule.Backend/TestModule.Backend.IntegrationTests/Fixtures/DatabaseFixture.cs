@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Configuration;
+
 using Npgsql;
 
 namespace TestModule.Backend.IntegrationTests.Fixtures;

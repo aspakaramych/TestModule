@@ -21,7 +21,7 @@ public class ProductsApiTests
         _fixture = fixture;
     }
 
-    [Theory(DisplayName = "УСПЕХ: Создание продукта с валидными данными")]
+    [Theory(DisplayName = "КОГДА передаются валидные данные, ТОГДА продукт успешно создается")]
     [MemberData(nameof(GetValidProductTestData))]
     public async Task CreateProduct_ValidData_ReturnsCreated(ProductCreateDto dto, string expectedTitle)
     {
@@ -36,7 +36,7 @@ public class ProductsApiTests
         Assert.Equal(dto.Flags, result.Flags);
     }
 
-    [Theory(DisplayName = "УСПЕХ: Создание продукта с граничными значениями КБЖУ")]
+    [Theory(DisplayName = "КОГДА передаются граничные значения КБЖУ, ТОГДА продукт успешно создается")]
     [InlineData(0, "Zero Calories")]
     [InlineData(0.01, "Minimal Calories")]
     [InlineData(9000, "Max Practical Calories")]
@@ -53,7 +53,7 @@ public class ProductsApiTests
         Assert.Equal(calories, result!.Calories);
     }
 
-    [Theory(DisplayName = "УСПЕХ: Создание продукта для всех категорий")]
+    [Theory(DisplayName = "КОГДА создается продукт любой категории, ТОГДА он успешно сохраняется")]
     [InlineData(ProductCategory.Meat)]
     [InlineData(ProductCategory.Vegetables)]
     [InlineData(ProductCategory.Frozen)]
@@ -71,8 +71,8 @@ public class ProductsApiTests
         Assert.Equal(category, result!.Category);
     }
 
-    [Theory(DisplayName = "УСПЕХ: Создание продукта с граничной длиной заголовка")]
-    [InlineData("X")]
+    [Theory(DisplayName = "КОГДА передается заголовок граничной длины, ТОГДА продукт успешно создается")]
+    [InlineData("X2")]
     [InlineData("Very Long Title... 100 symbols repeated...")]
     public async Task CreateProduct_BoundaryTitleLength_ReturnsCreated(string title)
     {
@@ -86,7 +86,7 @@ public class ProductsApiTests
         Assert.Equal(title, result!.Title);
     }
 
-    [Fact(DisplayName = "ОШИБКА: Сумма БЖУ > 100 возвращает 400 Bad Request")]
+    [Fact(DisplayName = "КОГДА сумма БЖУ превышает 100г, ТОГДА возвращается ошибка")]
     public async Task CreateProduct_SumOfMacrosExceeds100_ReturnsBadRequest()
     {
         var client = _fixture.Client;
@@ -110,7 +110,7 @@ public class ProductsApiTests
         yield return new object[] { ProductTestDataFactory.CreateComplexDietaryFlagsProduct(), "Complex Dietary Product" };
     }
 
-    [Fact(DisplayName = "СПИСОК: Получение всех продуктов без фильтров")]
+    [Fact(DisplayName = "КОГДА запрашиваются все продукты без фильтров, ТОГДА возвращается непустой список")]
     public async Task GetAllProducts_NoFilters_ReturnsNonEmptyList()
     {
         var client = _fixture.Client;
@@ -122,7 +122,7 @@ public class ProductsApiTests
         Assert.NotEmpty(result);
     }
 
-    [Theory(DisplayName = "ПОИСК: Поиск продуктов по подстроке в названии")]
+    [Theory(DisplayName = "КОГДА выполняется поиск по названию, ТОГДА возвращаются ожидаемые результаты")]
     [InlineData("Seed", true)]
     [InlineData("NonExistentProductXYZ", false)]
     public async Task GetProducts_SearchByQuery_ReturnsExpectedResults(string query, bool expectResults)
@@ -136,7 +136,7 @@ public class ProductsApiTests
         else Assert.Empty(result!);
     }
 
-    [Theory(DisplayName = "ФИЛЬТР: Фильтрация по уровню готовности")]
+    [Theory(DisplayName = "КОГДА задан фильтр по уровню готовности, ТОГДА возвращаются только подходящие продукты")]
     [InlineData(CookingNecessity.ReadyToEat)]
     [InlineData(CookingNecessity.RequiresCooking)]
     public async Task GetProducts_FilterByNecessity_ReturnsExpectedResults(CookingNecessity necessity)
@@ -149,7 +149,7 @@ public class ProductsApiTests
         Assert.All(result!, p => Assert.Equal(necessity, p.Necessity));
     }
 
-    [Fact(DisplayName = "ФИЛЬТР: Фильтрация по нескольким категориям")]
+    [Fact(DisplayName = "КОГДА задан фильтр по нескольким категориям, ТОГДА возвращаются только подходящие продукты")]
     public async Task GetProducts_FilterByMultipleCategories_ReturnsFilteredResults()
     {
         var client = _fixture.Client;
@@ -161,7 +161,7 @@ public class ProductsApiTests
         Assert.All(result!, p => Assert.True(p.Category == ProductCategory.Sweets || p.Category == ProductCategory.Vegetables));
     }
 
-    [Fact(DisplayName = "ПОЛУЧЕНИЕ: Запрос несуществующего продукта возвращает 404")]
+    [Fact(DisplayName = "КОГДА запрашивается несуществующий продукт, ТОГДА возвращается 404")]
     public async Task GetProduct_NonExistent_ReturnsNotFound()
     {
         var client = _fixture.Client;
@@ -169,7 +169,7 @@ public class ProductsApiTests
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
-    [Theory(DisplayName = "СОРТИРОВКА: Проверка различных полей")]
+    [Theory(DisplayName = "КОГДА задана сортировка по полю, ТОГДА список возвращается в правильном порядке")]
     [InlineData("calories")]
     [InlineData("proteins")]
     [InlineData("fats")]
@@ -200,7 +200,7 @@ public class ProductsApiTests
         }
     }
 
-    [Fact(DisplayName = "ОБНОВЛЕНИЕ: Изменение существующего продукта")]
+    [Fact(DisplayName = "КОГДА обновляются данные существующего продукта, ТОГДА изменения успешно сохраняются")]
     public async Task UpdateProduct_ValidUpdate_StoredCorrectly()
     {
         var client = _fixture.Client;
@@ -225,7 +225,7 @@ public class ProductsApiTests
         Assert.Equal(ProductCategory.Spices, updated.Category);
     }
 
-    [Fact(DisplayName = "ОШИБКА: Обновление продукта с невалидными макросами")]
+    [Fact(DisplayName = "КОГДА продукт обновляется невалидными макросами, ТОГДА возвращается ошибка")]
     public async Task UpdateProduct_InvalidMacros_ReturnsBadRequest()
     {
         var client = _fixture.Client;
@@ -237,14 +237,14 @@ public class ProductsApiTests
         { 
             Id = created!.Id, 
             Title = created.Title,
-            Proteins = 60, Fats = 60 // Total > 100
+            Proteins = 60, Fats = 60
         };
 
         var response = await client.PutAsJsonAsync($"{BaseUrl}/{created.Id}", updateDto);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
-    [Fact(DisplayName = "УДАЛЕНИЕ: Удаление продукта и проверка его отсутствия")]
+    [Fact(DisplayName = "КОГДА продукт удаляется, ТОГДА он больше не доступно в системе")]
     public async Task DeleteProduct_Exists_RemovedSuccessfully()
     {
         var client = _fixture.Client;
@@ -259,7 +259,7 @@ public class ProductsApiTests
         Assert.Equal(HttpStatusCode.NotFound, getResponse.StatusCode);
     }
 
-    [Fact(DisplayName = "ОШИБКА: Удаление продукта, используемого в блюде, запрещено")]
+    [Fact(DisplayName = "КОГДА удаляется продукт, используемый в блюде, ТОГДА возвращается ошибка")]
     public async Task DeleteProduct_UsedInDish_ReturnsBadRequest()
     {
         var client = _fixture.Client;
