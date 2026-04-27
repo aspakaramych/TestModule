@@ -1,0 +1,18 @@
+export const DishFormLocators = {
+  titleInputLabel: 'Название блюда',
+  categoryName: 'Категория',
+  addIngredientBtnName: 'Добавить ингредиент',
+  productName: 'Продукт',
+  weightInputLabel: 'Вес (г)',
+  caloriesInputLabel: 'Калории (ккал)',
+  proteinsInputLabel: 'Белки',
+  fatsInputLabel: 'Жиры',
+  carbsInputLabel: 'Углев.',
+  portionSizeLabel: 'Вес порции (г)',
+  proteinsInputName: 'proteins',
+  saveRecipeBtnName: 'Сохранить рецепт',
+  densityErrorText: /Плотность БЖУ выше 100%/,
+  veganCheckboxName: 'Веган',
+  trashIcon: 'svg.lucide-trash2',
+  sparklesIcon: 'svg.lucide-sparkles',
+};

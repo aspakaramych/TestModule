@@ -1,0 +1,18 @@
+export const ProductFormLocators = {
+  backBtnName: 'Назад к продуктам',
+  titleLabel: 'Название продукта',
+  descriptionLabel: 'Описание или Состав',
+  caloriesLabel: 'Энергия (ккал)',
+  proteinsLabel: 'Белки (г)',
+  fatsLabel: 'Жиры (г)',
+  carbsLabel: 'Углеводы (г)',
+  categoryName: 'Категория',
+  necessityName: 'Степень готовки',
+  veganLabel: 'Веганский',
+  glutenFreeLabel: 'Без Глютена',
+  sugarFreeLabel: 'Без Сахара',
+  saveBtnName: 'Создать и сохранить',
+  macrosInfoRegex: /Сумма БЖУ не должна превышать 100г/,
+  macrosLimitErrorText: 'Ошибка: Сумма макронутриентов (100.1г) превышает 100г!',
+  updateBtnName: 'Обновить данные',
+};

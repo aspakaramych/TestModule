@@ -1,4 +1,6 @@
 import { test, expect } from '@playwright/test';
+import { DishFormPage } from './pages/DishFormPage';
+import { DishFormLocators } from './locators/DishFormLocators';
 
 const dishCategories = [
   { label: 'Первое', macro: '!первое' },
@@ -11,79 +13,66 @@ const dishCategories = [
 ];
 
 test.describe('Блюда - Исчерпывающее соответствие API', () => {
+  let dishPage: DishFormPage;
+
   test.beforeEach(async ({ page }) => {
+    dishPage = new DishFormPage(page);
     await page.route('**/api/products*', async route => {
       await route.fulfill({ json: [
         { id: 'p1', title: 'Egg', calories: 100, proteins: 10, fats: 10, carbohydrates: 0, flags: 6 },
         { id: 'p2', title: 'Apple', calories: 50, proteins: 1, fats: 0, carbohydrates: 12, flags: 7 }
       ] });
     });
-    await page.goto('/dishes/new');
+    await dishPage.goto();
   });
 
   for (const cat of dishCategories) {
     test(`КОГДА в название вводится макрос "${cat.macro}", ТОГДА категория "${cat.label}" устанавливается автоматически`, async ({ page }) => {
-      const title = page.getByLabel('Название блюда');
-      await title.fill(`Test Dish ${cat.macro}`);
-      await expect(title).toHaveValue('Test Dish');
-      await expect(page.getByRole('combobox', { name: 'Категория' })).toContainText(cat.label);
+      await dishPage.fillTitle(`Test Dish ${cat.macro}`);
+      await expect(dishPage.titleInput).toHaveValue('Test Dish');
+      await expect(dishPage.categorySelect).toContainText(cat.label);
     });
   }
 
   test('КОГДА добавляется несколько ингредиентов, ТОГДА КБЖУ блюда суммируются автоматически', async ({ page }) => {
-    await page.getByRole('button', { name: 'Добавить ингредиент' }).click();
-    await page.getByRole('combobox', { name: 'Продукт' }).click();
-    await page.getByRole('option', { name: 'Egg' }).click();
-    await page.getByLabel('Вес (г)').fill('100');
+    await dishPage.addIngredient('Egg', '100', 0);
+    await dishPage.addIngredient('Apple', '100', 1);
     
-    await page.getByRole('button', { name: 'Добавить ингредиент' }).click();
-    await page.getByRole('combobox', { name: 'Продукт' }).nth(1).click();
-    await page.getByRole('option', { name: 'Apple' }).click();
-    await page.getByLabel('Вес (г)').nth(1).fill('100');
-    
-    await expect(page.getByLabel('Калории (ккал)')).toHaveValue('150');
-    await expect(page.getByLabel('Белки')).toHaveValue('11');
-    await expect(page.getByLabel('Жиры')).toHaveValue('10');
-    await expect(page.getByLabel('Углев.')).toHaveValue('12');
+    await expect(dishPage.caloriesInput).toHaveValue('150');
+    await expect(dishPage.proteinsInput).toHaveValue('11');
+    await expect(dishPage.fatsInput).toHaveValue('10');
+    await expect(dishPage.carbsInput).toHaveValue('12');
   });
 
   test('КОГДА флаги блюда противоречат ингредиентам (мясо в веганском блюде), ТОГДА некорректные флаги сбрасываются', async ({ page }) => {
-    await page.getByRole('button', { name: 'Добавить ингредиент' }).click();
-    await page.getByRole('combobox', { name: 'Продукт' }).click();
-    await page.getByRole('option', { name: 'Apple' }).click();
+    await dishPage.addIngredient('Apple', '100', 0);
+    await expect(dishPage.veganCheckbox).toBeEnabled();
+    await dishPage.veganCheckbox.check();
     
-    const vegan = page.getByRole('checkbox', { name: 'Веган' });
-    await expect(vegan).toBeEnabled();
-    await vegan.check();
-    
-    await page.getByRole('button', { name: 'Добавить ингредиент' }).click();
-    await page.getByRole('combobox', { name: 'Продукт' }).nth(1).click();
-    await page.getByRole('option', { name: 'Egg' }).click();
-    
-    await expect(vegan).toBeDisabled();
-    await expect(vegan).not.toBeChecked();
+    await dishPage.addIngredient('Egg', '100', 1);
+    await expect(dishPage.veganCheckbox).toBeDisabled();
+    await expect(dishPage.veganCheckbox).not.toBeChecked();
   });
 
   const portions = ['1', '500', '5000'];
   for (const p of portions) {
     test(`КОГДА устанавливается размер порции "${p}г", ТОГДА форма остается валидной и готова к сохранению`, async ({ page }) => {
-      const input = page.getByLabel('Вес порции (г)');
-      await input.fill(p);
-      await expect(input).toHaveValue(p);
-      await expect(page.getByRole('button', { name: 'Сохранить рецепт' })).toBeEnabled();
+      await dishPage.setPortionSize(p);
+      await expect(dishPage.portionSizeInput).toHaveValue(p);
+      await expect(dishPage.saveRecipeBtn).toBeEnabled();
     });
   }
 
   test('КОГДА плотность БЖУ на граничном уровне (100.1г), ТОГДА блюдо успешно проходит валидацию', async ({ page }) => {
-    await page.getByLabel('Вес порции (г)').fill('100');
-    await page.locator('input[name="proteins"]').fill('100.1');
-    await expect(page.getByRole('button', { name: 'Сохранить рецепт' })).toBeEnabled();
+    await dishPage.setPortionSize('100');
+    await dishPage.fillProteins('100.1');
+    await expect(dishPage.saveRecipeBtn).toBeEnabled();
   });
 
   test('КОГДА плотность БЖУ превышает 100.1г, ТОГДА выводится ошибка и сохранение блокируется UI', async ({ page }) => {
-    await page.getByLabel('Вес порции (г)').fill('100');
-    await page.locator('input[name="proteins"]').fill('100.2');
-    await expect(page.getByText(/Плотность БЖУ выше 100%/)).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Сохранить рецепт' })).toBeDisabled();
+    await dishPage.setPortionSize('100');
+    await dishPage.fillProteins('100.2');
+    await expect(page.getByText(DishFormLocators.densityErrorText)).toBeVisible();
+    await expect(dishPage.saveRecipeBtn).toBeDisabled();
   });
 });
