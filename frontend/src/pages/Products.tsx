@@ -8,7 +8,7 @@ import { Plus, Edit2, Trash2, Search, ArrowUpDown, Package } from 'lucide-react'
 import { useNavigate } from 'react-router-dom';
 import { getProducts, deleteProduct } from '../api';
 import type { ProductDto } from '../api/types';
-import { ProductCategory, DietaryFlags, ProductCategoryLabels } from '../api/types';
+import { ProductCategory, DietaryFlags, ProductCategoryLabels, CookingNecessity } from '../api/types';
 import DetailsModal from '../components/DetailsModal';
 
 export default function Products() {
@@ -18,8 +18,8 @@ export default function Products() {
   const [selectedProduct, setSelectedProduct] = useState<ProductDto | null>(null);
   
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string>('');
-  const [necessity, setNecessity] = useState<string>('');
+  const [category, setCategory] = useState<string | number>('');
+  const [necessity, setNecessity] = useState<string | number>('');
   const [flags, setFlags] = useState<number>(0);
   const [sortBy, setSortBy] = useState('title');
 
@@ -111,7 +111,7 @@ export default function Products() {
             >
               <MenuItem value="">Все категории</MenuItem>
               {Object.entries(ProductCategoryLabels).map(([val, label]) => (
-                <MenuItem key={val} value={Object.keys(ProductCategory).find(k => (ProductCategory as any)[k] === Number(val))}>{label}</MenuItem>
+                <MenuItem key={val} value={Number(val)}>{label}</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -123,9 +123,9 @@ export default function Products() {
               displayEmpty
             >
               <MenuItem value="">Любая готовка</MenuItem>
-              <MenuItem value="ReadyToEat">Готовый</MenuItem>
-              <MenuItem value="SemiFinished">Полуфабрикат</MenuItem>
-              <MenuItem value="RequiresCooking">Готовить</MenuItem>
+              <MenuItem value={CookingNecessity.ReadyToEat}>Готовый</MenuItem>
+              <MenuItem value={CookingNecessity.SemiFinished}>Полуфабрикат</MenuItem>
+              <MenuItem value={CookingNecessity.RequiresCooking}>Готовить</MenuItem>
             </Select>
           </FormControl>
 

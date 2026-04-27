@@ -42,6 +42,7 @@ public class DishesApiTests
     [Theory(DisplayName = "КОГДА в названии блюда есть макрос, ТОГДА категория устанавливается автоматически")]
     [InlineData("Весенний !салат", DishCategory.Salad)]
     [InlineData("Шоколадный !десерт", DishCategory.Dessert)]
+    [InlineData("Вода !напиток", DishCategory.Drink)]
     public async Task CreateDish_WithMacroInTitle_SetsCorrectCategory(string title, DishCategory expectedCategory)
     {
         var client = _fixture.Client;

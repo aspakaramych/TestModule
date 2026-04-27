@@ -25,6 +25,7 @@ services:
       db-test:
         condition: service_healthy
     restart: "no"
+    
   app-test:
     build:
       context: .
